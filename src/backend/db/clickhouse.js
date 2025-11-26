@@ -1,17 +1,17 @@
-const { ClickHouse } = require('clickhouse');
+const { ClickHouse } = require("clickhouse");
 
 const clickhouse = new ClickHouse({
-  url: process.env.CLICKHOUSE_URL || 'http://localhost',
+  url: process.env.CLICKHOUSE_URL || "http://localhost",
   port: Number(process.env.CLICKHOUSE_PORT || 8123),
   debug: false,
   basicAuth: {
-    username: process.env.CLICKHOUSE_USER || 'default',
-    password: process.env.CLICKHOUSE_PASSWORD || '',
+    username: process.env.CLICKHOUSE_USER || "default",
+    password: process.env.CLICKHOUSE_PASSWORD || "",
   },
   config: {
-    database: process.env.CLICKHOUSE_DB || 'default',
+    database: process.env.CLICKHOUSE_DB || "default",
   },
-  format: 'json',
+  format: "json",
 });
 
 // Cria a tabela se não existir
@@ -30,23 +30,35 @@ function ensureTable() {
     .query(ddl)
     .toPromise()
     .then(() => {
-      console.log('[ClickHouse] Tabela temperaturas_diarias pronta.');
+      console.log("[ClickHouse] Tabela temperaturas_diarias pronta.");
     })
     .catch((err) => {
-      console.error('[ClickHouse] Erro ao criar tabela:', err.message);
+      console.error("[ClickHouse] Erro ao criar tabela:", err.message);
     });
 }
 
 async function insertTemperaturas(rows) {
   if (!rows || !rows.length) return;
 
-  // rows = [[timestamp, maquina, valor], ...]
-  await clickhouse
-    .insert(
-      'INSERT INTO temperaturas_diarias (timestamp, maquina, valor) VALUES',
-      rows
+  const values = rows
+    .map(
+      ([timestamp, maquina, valor]) =>
+        `('${timestamp}', '${maquina}', ${valor})`
     )
-    .toPromise();
+    .join(", ");
+
+  const query = `INSERT INTO temperaturas_diarias (timestamp, maquina, valor) VALUES ${values}`;
+
+  console.log("[ClickHouse] Executando INSERT:", query);
+
+  try {
+    const result = await clickhouse.query(query).toPromise();
+    console.log("[ClickHouse] INSERT bem-sucedido, linhas:", rows.length);
+    return result;
+  } catch (err) {
+    console.error("[ClickHouse] Erro no INSERT:", err.message);
+    throw err;
+  }
 }
 
 ensureTable();

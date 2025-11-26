@@ -1,14 +1,14 @@
-const express = require('express');
+const express = require("express");
 const router = express.Router();
 
-const influx = require('../db/influx');
-const { clickhouse, insertTemperaturas } = require('../db/clickhouse');
+const influx = require("../db/influx");
+const { clickhouse, insertTemperaturas } = require("../db/clickhouse");
 
 // Converte o "time" (Influx) para string YYYY-MM-DD HH:MM:SS
 function toClickHouseDateTime(dateOrString) {
   const d = new Date(dateOrString);
   const iso = d.toISOString(); // 2025-11-25T21:05:30.123Z
-  return iso.replace('T', ' ').substring(0, 19); // 2025-11-25 21:05:30
+  return iso.replace("T", " ").substring(0, 19); // 2025-11-25 21:05:30
 }
 
 // Sincroniza últimas 10 leituras da Influx para ClickHouse
@@ -21,7 +21,7 @@ async function syncUltimos10() {
   `);
 
   if (!result.length) {
-    console.log('[stats] Nenhum dado encontrado na Influx para sync.');
+    console.log("[stats] Nenhum dado encontrado na Influx para sync.");
     return;
   }
 
@@ -38,21 +38,51 @@ async function syncUltimos10() {
 }
 
 // GET /stats/diario -> dispara sync (pode ser chamado pelo simulador/cron)
-router.get('/diario', async (req, res) => {
+router.get("/diario", async (req, res) => {
   try {
     await syncUltimos10();
-    return res.json({ ok: true, msg: 'Sincronização realizada com sucesso.' });
+    return res.json({ ok: true, msg: "Sincronização realizada com sucesso." });
   } catch (e) {
-    console.error('[GET /stats/diario] Erro:', e);
+    console.error("[GET /stats/diario] Erro:", e);
+    return res.status(500).json({ erro: e.message });
+  }
+});
+
+// GET /stats/agregado -> retorna estatísticas agregadas por dia e máquina
+router.get("/agregado", async (req, res) => {
+  try {
+    const rows = await clickhouse
+      .query(
+        `
+        SELECT
+          toDate(timestamp) AS dia,
+          maquina,
+          avg(valor) AS media,
+          min(valor) AS minimo,
+          max(valor) AS maximo,
+          count() AS quantidade
+        FROM temperaturas_diarias
+        GROUP BY dia, maquina
+        ORDER BY dia DESC, maquina
+        LIMIT 50
+      `
+      )
+      .toPromise();
+
+    const data = Array.isArray(rows) ? rows : rows?.data || rows;
+    return res.json(data);
+  } catch (e) {
+    console.error("[GET /stats/agregado] Erro:", e);
     return res.status(500).json({ erro: e.message });
   }
 });
 
 // GET /stats/raw -> lê direto do ClickHouse
-router.get('/raw', async (req, res) => {
+router.get("/raw", async (req, res) => {
   try {
     const rows = await clickhouse
-      .query(`
+      .query(
+        `
         SELECT
           timestamp,
           maquina,
@@ -60,32 +90,36 @@ router.get('/raw', async (req, res) => {
         FROM temperaturas_diarias
         ORDER BY timestamp DESC
         LIMIT 50
-      `)
+      `
+      )
       .toPromise();
 
-    return res.json(rows.data);
+    const data = Array.isArray(rows) ? rows : rows?.data || rows;
+    return res.json(data);
   } catch (e) {
-    console.error('[GET /stats/raw] Erro:', e);
+    console.error("[GET /stats/raw] Erro:", e);
     return res.status(500).json({ erro: e.message });
   }
 });
 
 // (Opcional) GET /stats/teste-clickhouse -> diagnóstico
-router.get('/teste-clickhouse', async (req, res) => {
+router.get("/teste-clickhouse", async (req, res) => {
   try {
     const rows = await clickhouse
-      .query(`
+      .query(
+        `
         SELECT
           count() AS total,
           max(timestamp) AS ultimo
         FROM temperaturas_diarias
-      `)
+      `
+      )
       .toPromise();
 
-    console.log('[GET /stats/teste-clickhouse] Resultado:', rows.data);
-    return res.json(rows.data);
+    const data = Array.isArray(rows) ? rows : rows?.data || rows;
+    return res.json(data);
   } catch (e) {
-    console.error('[GET /stats/teste-clickhouse] Erro:', e);
+    console.error("[GET /stats/teste-clickhouse] Erro:", e);
     return res.status(500).json({ erro: e.message });
   }
 });

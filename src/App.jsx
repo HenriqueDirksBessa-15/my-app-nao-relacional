@@ -34,7 +34,8 @@ export default function App() {
 
   const carregarStats = async () => {
     try {
-      const res = await api.get("/stats/diario");
+      await api.get("/stats/diario");
+      const res = await api.get("/stats/agregado");
       setStats(Array.isArray(res.data) ? res.data : []);
       setErroStats("");
     } catch (err) {
@@ -67,8 +68,22 @@ export default function App() {
   }, []);
 
   return (
-    <div style={{ padding: 20, fontFamily: "Arial", maxWidth: 960, margin: "0 auto" }}>
-      <header style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+    <div
+      style={{
+        padding: 20,
+        fontFamily: "Arial",
+        maxWidth: 960,
+        margin: "0 auto",
+      }}
+    >
+      <header
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          marginBottom: 16,
+        }}
+      >
         <h2 style={{ margin: 0 }}>Monitoramento</h2>
         <nav style={{ display: "flex", gap: 12 }}>
           <a href="#nova">Nova Leitura</a>
@@ -80,10 +95,16 @@ export default function App() {
 
       <div id="nova">
         <h3>Nova Leitura</h3>
-        <input value={maquina} onChange={e => setMaquina(e.target.value)} />
-        <input value={valor} onChange={e => setValor(e.target.value)} type="number" />
+        <input value={maquina} onChange={(e) => setMaquina(e.target.value)} />
+        <input
+          value={valor}
+          onChange={(e) => setValor(e.target.value)}
+          type="number"
+        />
         <button onClick={enviarLeitura}>Enviar</button>
-        <button style={{ marginLeft: 8 }} onClick={atualizarTudo}>Atualizar listas</button>
+        <button style={{ marginLeft: 8 }} onClick={atualizarTudo}>
+          Atualizar listas
+        </button>
       </div>
 
       <hr />
@@ -91,7 +112,9 @@ export default function App() {
       <h3 id="ultimas">Últimas Leituras (InfluxDB)</h3>
       <ul>
         {leituras.map((l, i) => (
-          <li key={i}>Máquina {l.maquina}: {l.valor}°C</li>
+          <li key={i}>
+            Máquina {l.maquina}: {l.valor}°C
+          </li>
         ))}
       </ul>
 
