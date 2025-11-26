@@ -1,70 +1,64 @@
-# Getting Started with Create React App
+# Monitoramento de Temperaturas (React + Express + InfluxDB + ClickHouse)
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+Aplicação simples para registrar leituras de temperatura no InfluxDB e gerar estatísticas diárias no ClickHouse.
 
-## Available Scripts
+## Requisitos
+- Docker Desktop
+- Node.js 16+
+- npm
 
-In the project directory, you can run:
+## Subindo os bancos
 
-### `npm start`
+### InfluxDB 1.8
+```bash
+docker run -d --name influxdb -p 8086:8086 influxdb:1.8
+```
+Criar banco (se ainda não existir):
+```bash
+docker exec -it influxdb influx -execute "CREATE DATABASE temperaturas"
+```
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+### ClickHouse
+```bash
+docker run -d --name clickhouse -p 8123:8123 -p 9000:9000 clickhouse/clickhouse-server:23
+```
+Criar base (opcional se usar `default`):
+```bash
+docker exec -it clickhouse clickhouse-client --query "CREATE DATABASE IF NOT EXISTS default"
+```
+Tabela (o backend também cria, mas você pode garantir manualmente):
+```bash
+docker exec -it clickhouse clickhouse-client --query "CREATE TABLE IF NOT EXISTS default.temperaturas_diarias (timestamp DateTime, maquina String, valor Float32) ENGINE = MergeTree() ORDER BY (timestamp, maquina)"
+```
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+## Backend
+```bash
+cd src/backend
+npm install
+# Se precisar ajustar porta/host do ClickHouse HTTP (padrão 8123): $env:CLICKHOUSE_PORT=8123 (PowerShell)
+npm start
+# Servidor em http://localhost:3001
+```
 
-### `npm test`
+## Frontend
+```bash
+npm install
+npm start
+# Abre em http://localhost:3000
+```
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+## Simulador (opcional)
+Gera leituras e aciona o relatório automaticamente.
+```bash
+node src/simulador/simulador.js
+```
 
-### `npm run build`
+## Endpoints úteis
+- `POST http://localhost:3001/metrics/metric` body `{ "maquina": "A1", "valor": 50 }`
+- `GET http://localhost:3001/metrics/metric/latest`
+- `GET http://localhost:3001/stats/diario` (sincroniza últimos 10 do Influx -> ClickHouse e retorna médias diárias)
+- `GET http://localhost:3001/stats/raw` (últimas leituras no ClickHouse)
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
-
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
-
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
-
-### `npm run eject`
-
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
-
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
-
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
-
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
-
-## Learn More
-
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
-
-To learn React, check out the [React documentation](https://reactjs.org/).
-
-### Code Splitting
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
-
-### Analyzing the Bundle Size
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
-
-### Making a Progressive Web App
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
-
-### Advanced Configuration
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
-
-### Deployment
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+## Observações
+- O backend usa o driver HTTP do ClickHouse (porta 8123). Certifique-se de expor essa porta no container.
+- InfluxDB: base padrão `temperaturas` em `localhost:8086`. Ajuste via `INFLUX_DB`/`INFLUX_HOST` se necessário.
