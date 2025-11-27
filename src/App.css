@@ -1,0 +1,159 @@
+/* ======== CONFIGURAÇÕES GERAIS ======== */
+body {
+  margin: 0;
+  padding: 0;
+  background: #f3f6fa;
+  font-family: "Inter", sans-serif;
+  color: #333;
+}
+
+/* Container geral */
+.container {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 40px 20px;
+}
+
+/* Títulos */
+h2, h3 {
+  margin: 0 0 15px;
+  font-weight: 700;
+  color: #2c3e50;
+}
+
+/* Espaçamento entre seções */
+section {
+  margin-bottom: 50px;
+}
+
+/* ======== HEADER ======== */
+header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 50px;
+}
+
+header h2 {
+  font-size: 32px;
+  letter-spacing: -0.5px;
+}
+
+header nav a {
+  font-size: 17px;
+  color: #2563eb;
+  text-decoration: none;
+  font-weight: 500;
+  padding-bottom: 2px;
+  transition: 0.3s;
+}
+
+header nav a:hover {
+  color: #1e3a8a;
+  border-bottom: 2px solid #1e3a8a;
+}
+
+/* ======== SEÇÕES ======== */
+.card {
+  background: white;
+  padding: 30px;
+  border-radius: 18px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.07);
+  border: 1px solid #e5e7eb;
+  transition: 0.3s;
+}
+
+.card:hover {
+  transform: translateY(-3px);
+}
+
+/* ======== INPUTS E BOTÕES ======== */
+input {
+  width: 100%;
+  padding: 12px 16px;
+  border-radius: 10px;
+  border: 1px solid #000000;
+  background: #f8fafc;
+  font-size: 16px;
+  transition: 0.2s;
+}
+
+input:focus {
+  outline: none;
+  border-color: #2563eb;
+  background: #ffffff;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+}
+
+/* Botões */
+button {
+  padding: 12px 24px;
+  font-size: 16px;
+  font-weight: 600;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: 0.25s;
+}
+
+button.enviar {
+  background: #2563eb;
+  color: white;
+}
+
+button.enviar:hover {
+  background: #1d4ed8;
+}
+
+button.atualizar {
+  background: #e5e7eb;
+  color: #333;
+}
+
+button.atualizar:hover {
+  background: #d1d5db;
+}
+
+/* Layout inputs e botões */
+.form-row {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+@media (min-width: 768px) {
+  .form-row {
+    flex-direction: row;
+    align-items: center;
+  }
+}
+
+/* ======== LISTAS DE DADOS ======== */
+.lista-item {
+  background: #f9fafb;
+  padding: 14px 18px;
+  border-radius: 10px;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.04);
+  font-size: 15.5px;
+  transition: 0.2s;
+}
+
+.lista-item:hover {
+  transform: translateX(4px);
+  background: #ffffff;
+}
+
+/* Mensagens */
+.text-muted {
+  color: #6b7280;
+}
+
+.text-error {
+  color: #dc2626;
+  font-weight: 600;
+}
+
+.text-blue {
+  color: #2563eb;
+}
